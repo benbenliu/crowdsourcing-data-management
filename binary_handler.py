@@ -8,7 +8,7 @@ ans1, ans2, ..., ans_{numWorkers}
 """
 
 class binary_handler:
-	def __init__(self, numWorkers, numTasks, ratings_path, max_iter = 10):
+	def __init__(self, numWorkers, numTasks, ratings_path):
 		"""
 		 p  = [	true neg, false neg(e1)
 
@@ -29,7 +29,8 @@ class binary_handler:
 		self.f = {}
 		self.data = read_file(ratings_path)
 		for i in xrange(self.numTasks):
-			if np.mean(self.data[i]) > 0.5:
+			# if np.mean(self.data[i]) > 0.5:
+			if np.random.rand() > 0.5:
 				self.f[i] = 1
 			else:
 				self.f[i] = 0
@@ -99,7 +100,6 @@ class binary_handler:
 		assert true_pos_count+true_neg_count+false_pos_count\
 		+false_neg_count == self.numWorkers*self.numTasks, "counts and data are inconsistent"
 		# compute log likelihood
-		# print true_pos_count, true_neg_count, false_pos_count, false_neg_count
 		likelihood = np.log(true_pos+10**(-9))*true_pos_count+np.log(true_neg+10**(-9))*true_neg_count\
 					+np.log(false_pos+10**(-9))*false_pos_count+np.log(false_neg+10**(-9))*false_neg_count
 
@@ -109,7 +109,7 @@ class binary_handler:
 
 		max_lh = -1000000000
 		max_f = {}
-
+		count = 0
 		for cut_point in xrange(1,len(self.sorted_bucket)-1):
 			# get all the buckets containing items that should be 1
 			one_bucket_indices = self.sorted_bucket[:cut_point]
@@ -131,12 +131,10 @@ class binary_handler:
 			#if the new mapping function produces larger likelihood, replace the old one
 			if temp_lh > max_lh:
 				max_lh = temp_lh
-				max_f = self.f
-			print max_lh
-			# print self.current_truths
+				max_f = self.f.copy()
 		#update f
 		self.f = max_f
-	
+
 	def train(self):
 		it = 0
 		print "begin bucketizing..."
@@ -145,9 +143,20 @@ class binary_handler:
 		self.dominance_sort()
 		print "updating..."
 		self.update_f()
+		print "final results:"
 		print self.f.values()
 
+		print "worker errors distribution: "
+		print  self.p
 
-bh = binary_handler(19, 48, "IC_data/IC_Data.txt")
-bh.train()
+	def eval(self):
+		estimation = np.array(self.f.values())
+		groundtruth = np.loadtxt("IC_data/IC_Gold.txt")
+
+		print "accuracy: ", np.sum(estimation == groundtruth)/float(self.numTasks)   
+
+if __name__ == "__main__":
+	bh = binary_handler(19, 48, "IC_data/IC_Data.txt")
+	bh.train()
+	bh.eval()
 
