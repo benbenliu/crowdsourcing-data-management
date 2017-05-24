@@ -29,7 +29,6 @@ class binary_handler:
 		self.f = {}
 		self.data = read_file(ratings_path)
 		for i in xrange(self.numTasks):
-			# if np.mean(self.data[i]) > 0.5:
 			if np.random.rand() > 0.5:
 				self.f[i] = 1
 			else:
@@ -38,7 +37,6 @@ class binary_handler:
 		self.p = np.array([[0.6,0.4],[0.4,0.6]])
 		
 		self.current_truths = np.array(map(self.mapping_func, range(numTasks)))
-		self.max_iter = max_iter
 		self.bucket2i = {}
 		self.m2bucket = {}
 		self.sorted_bucket = []
@@ -70,7 +68,6 @@ class binary_handler:
 	def bucketize(self):
 		# get all the response sets
 		Ms = make_response_set(self.data, 2)
-		# print Ms
 		#hash them, update dictionaries
 		hash_response_set(Ms,self.bucket2i,self.m2bucket)
 		#sanity check
